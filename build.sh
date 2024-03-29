@@ -132,6 +132,25 @@ case $board in
 		FILE_SOC=include/configs/mt7988.h
 		UBOOT_FILE=u-boot.bin
 	;;
+	"zbt-z8102ax")
+		export ARCH=arm64
+		export CROSS_COMPILE=aarch64-linux-gnu-
+
+		if [[ "$device" =~ (emmc|spi-nand|spi-nor) ]];then
+			dev=emmc
+		else
+			dev=$device
+		fi
+		FILE_DEFCFG=mt7981_${dev}_rfb_defconfig
+
+		DTS=mt79861-${dev}-rfb
+		FILE_DTS=arch/arm/dts/${DTS}.dts
+		FILE_DTSI=arch/arm/dts/mt7981.dtsi
+
+		FILE_BOARD=board/mediatek/mt7981/mt7981_rfb.c
+		FILE_SOC=include/configs/mt7981.h
+		UBOOT_FILE=u-boot.bin
+	;;
 	*)
 		echo "unsupported"
 		exit 1;
@@ -178,6 +197,8 @@ case $1 in
 			fi;
 			if [[ -e uEnv_r3.txt.bak ]];then
 				mv uEnv_r3.txt{.bak,}
+			elif [[ -e uEnv_zbt-z8102ac.txt.bak ]];then
+				mv uEnv_zbt-z8102ac.txt{.bak,}
 			fi
 		else
 			echo "build failed!"
@@ -196,6 +217,12 @@ case $1 in
 					sed -i.bak '/^CONFIG_ENV_IS_IN_MMC/d' configs/$FILE_DEFCFG
 				fi
 				sed -i.bak 's/\(bootdevice=\).*/\1'${device}'/' uEnv_r3.txt
+			elif [[ "$board" == "zbt-z8102ax" ]];then
+				rm configs/${FILE_DEFCFG}.bak 2>/dev/null
+				if [[ "$device" =~ "spi" ]];then
+					sed -i.bak '/^CONFIG_ENV_IS_IN_MMC/d' configs/$FILE_DEFCFG
+				fi
+				sed -i.bak 's/\(bootdevice=\).*/\1'${device}'/' uEnv_zbt-z8102ax.txt
 			fi
 			make $FILE_DEFCFG
 			if [[ -e configs/${FILE_DEFCFG}.bak ]];then
